@@ -23,6 +23,8 @@ class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
     }
 
     function handle_action_act_preprocess(&$event, $param) {
+        global $ID, $INFO, $REV, $RANGE, $TEXT, $PRE, $SUF;
+
         $event->data = act_clean($event->data);
         if ($event->data == 'save' && $_REQUEST['saveandedit']) {
             $event->data = act_permcheck($event->data);
@@ -30,6 +32,27 @@ class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
                 $event->data = act_save($event->data);
                 if ($event->data == 'show') {
                     $event->data = 'edit';
+                    $REV = ''; // now we are working on the current revision
+                    // Handle section edits
+                    if ($PRE || $SUF) { 
+                        // $from and $to are 1-based indexes of the actually edited content
+                        $from = strlen($PRE) + 1;
+                        $to = $from + strlen($TEXT);
+                        $RANGE = $from . '-' . $to;
+                    }
+                    // Ensure the current text is loaded again from the file
+                    unset($GLOBALS['TEXT'], $GLOBALS['PRE'], $GLOBALS['SUF']);
+                    // Reset the date of the last modification to avoid conflict messages
+                    unset($GLOBALS['DATE']);
+                    // Reset the change check
+                    unset($_REQUEST['changecheck']);
+                    // Force rendering of the metadata in order to ensure metadata is correct
+                    p_set_metadata($ID, array(), true);
+                    $INFO = pageinfo(); // reset pageinfo to new data (e.g. if the page exists)
+                } elseif ($event->data == 'conflict') {
+                    // DokuWiki won't accept 'conflict' as action here.
+                    // Just execute save again, the conflict will be detected again
+                    $event->data = 'save';
                 }
             }
         }
