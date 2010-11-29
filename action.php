@@ -17,12 +17,12 @@ require_once DOKU_PLUGIN.'action.php';
 
 class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
 
-    function register(&$controller) {
+    public function register(Doku_Event_Handler &$controller) {
        $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_action_act_preprocess');
        $controller->register_hook('HTML_EDITFORM_OUTPUT', 'BEFORE', $this, 'handle_html_editform_output');
     }
 
-    function handle_action_act_preprocess(&$event, $param) {
+    public function handle_action_act_preprocess(Doku_Event &$event, $param) {
         global $ID, $INFO, $REV, $RANGE, $TEXT, $PRE, $SUF;
 
         $event->data = act_clean($event->data);
@@ -58,7 +58,7 @@ class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
         }
     }
 
-    function handle_html_editform_output(&$event, $param) {
+    public function handle_html_editform_output(Doku_Event &$event, $param) {
         $pos = $event->data->findElementByAttribute('type','submit');
         if(!$pos) return; // no submit button found, source view
         $pos -= 1;
