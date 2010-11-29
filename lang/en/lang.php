@@ -10,4 +10,4 @@ $lang['btn_saveandedit'] = 'Continue editing after saving';
 
 
 
-//Setup VIM: ex: et ts=4 enc=utf-8 :
+//Setup VIM: ex: et ts=4 :
