@@ -25,11 +25,16 @@ class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
     public function handle_action_act_preprocess(Doku_Event &$event, $param) {
         global $ID, $INFO, $REV, $RANGE, $TEXT, $PRE, $SUF;
 
-        $event->data = act_clean($event->data);
-        if ($event->data == 'save' && $_REQUEST['saveandedit']) {
-            $event->data = act_permcheck($event->data);
-            if ($event->data == 'save' && checkSecurityToken()) {
-                $event->data = act_save($event->data);
+        // check if the action was given as array key
+        if(is_array($event->data)){
+            list($act) = array_keys($event->data);
+        } else {
+            $act = $event->data;
+        }
+
+        if ($act == 'save' && $_REQUEST['saveandedit'] && actionOK($act)) {
+            if (act_permcheck($act) == 'save' && checkSecurityToken()) {
+                $event->data = act_save($act);
                 if ($event->data == 'show') {
                     $event->data = 'edit';
                     $REV = ''; // now we are working on the current revision
