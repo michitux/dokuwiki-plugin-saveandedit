@@ -19,7 +19,8 @@ class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
     private $previous_act = null;
 
     public function register(Doku_Event_Handler $controller) {
-       $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_action_act_preprocess');
+       // try to register our handler at a late position so e.g. the edittable plugin has a possibility to process its data
+       $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_action_act_preprocess', null, 1000);
        $controller->register_hook('HTML_EDITFORM_OUTPUT', 'BEFORE', $this, 'handle_html_editform_output');
     }
 
