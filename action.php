@@ -64,9 +64,40 @@ class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
 
         // Greebo and above
         if (class_exists('\\dokuwiki\\ActionRouter', false)) {
+	    /*
+	       The ACTION_ACT_PREPROCESS event is triggered several
+	       times, once for every action. After the save has been
+	       executed, the next event is 'draftdel'. We intercept
+	       the 'draftdel' action and replace it by 'edit'. As this
+	       is a logical place where other plugins may want to save
+	       data (e.g. blogtng), we try to be handled relatively
+	       late. To fix plugins that want to handle the 'edit'
+	       action, we trigger a new event for the 'edit' action.
+	    */
             if ($this->previous_act === 'save' && $act === 'draftdel') {
                 $this->clean_after_save();
                 $event->data = 'edit';
+
+		/*
+		   Stop propagation of the event. All subsequent event
+		   handlers will be called anyway again by the event
+		   triggered below.
+		*/
+		$event->stopPropagation();
+
+		/*
+		   Trigger a new event for the edit action.
+		   This ensures that all event handlers for the edit
+		   action are called.  However, we only advise the
+		   before handlers and re-use the default action and
+		   the after handling of the original event.
+		*/
+		$new_evt = new \Doku_Event('ACTION_ACT_PREPROCESS', $event->data);
+		// prevent the default action of the original event
+		if (!$new_evt->advise_before()) {
+		    $event->preventDefault();
+		}
+
             }
 
             $this->previous_act = $act;
