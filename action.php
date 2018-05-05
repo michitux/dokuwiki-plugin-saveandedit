@@ -79,6 +79,16 @@ class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
                 $event->data = 'edit';
 
 		/*
+		   The edittable plugin would restore $TEXT from the
+		   edittable_data post data on each
+		   ACTION_ACT_PREPROCESS call. This breaks the
+		   automatic restore of the prefix and suffix
+		   data. Stop it from doing this by unsetting its
+		   data.
+		*/
+		$INPUT->post->remove('edittable_data');
+
+		/*
 		   Stop propagation of the event. All subsequent event
 		   handlers will be called anyway again by the event
 		   triggered below.
