@@ -133,11 +133,9 @@ class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
         $pos = $event->data->findElementByAttribute('type','submit');
         if(!$pos) return; // no submit button found, source view
         $pos -= 1;
-        $event->data->insertElement($pos++, form_makeOpenTag('div', array()));
+        $event->data->insertElement($pos++, form_makeOpenTag('div', array('class' => 'saveedit')));
         $attrs = $INPUT->bool('saveandedit') ? array('checked' => 'checked') : array();
         $event->data->insertElement($pos++, form_makeCheckboxField('saveandedit', '1', $this->getLang('btn_saveandedit'), '', '', $attrs));
         $event->data->insertElement($pos++, form_makeCloseTag('div'));
     }
 }
-
-// vim:ts=4:sw=4:et:
