@@ -11,7 +11,6 @@ if (!defined('DOKU_INC')) die();
 
 if (!defined('DOKU_LF')) define('DOKU_LF', "\n");
 if (!defined('DOKU_TAB')) define('DOKU_TAB', "\t");
-if (!defined('DOKU_PLUGIN')) define('DOKU_PLUGIN',DOKU_INC.'lib/plugins/');
 
 class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
 
@@ -21,7 +20,7 @@ class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
     public function register(Doku_Event_Handler $controller) {
        // try to register our handler at a late position so e.g. the edittable plugin has a possibility to process its data
        $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_action_act_preprocess', null, 1000);
-       $controller->register_hook('HTML_EDITFORM_OUTPUT', 'BEFORE', $this, 'handle_html_editform_output');
+       $controller->register_hook('FORM_EDIT_OUTPUT', 'BEFORE', $this, 'handle_html_editform_output');
     }
 
     /**
@@ -130,13 +129,18 @@ class action_plugin_saveandedit extends DokuWiki_Action_Plugin {
     public function handle_html_editform_output(Doku_Event $event, $param) {
         global $INPUT;
 
-        $pos = $event->data->findElementByAttribute('type','submit');
-        if(!$pos) return; // no submit button found, source view
+	$form = $event->data;
+	$pos = $form->findPositionByAttribute('type','submit');
+
+	if(!$pos) return; // no submit button found, source view
         $pos -= 1;
-        $event->data->insertElement($pos++, form_makeOpenTag('div', array()));
-        $attrs = $INPUT->bool('saveandedit') ? array('checked' => 'checked') : array();
-        $event->data->insertElement($pos++, form_makeCheckboxField('saveandedit', '1', $this->getLang('btn_saveandedit'), '', '', $attrs));
-        $event->data->insertElement($pos++, form_makeCloseTag('div'));
+
+	$form->addTagOpen('div', $pos++);
+	$attrs = $INPUT->bool('saveandedit') ? array('checked' => 'checked') : array();
+
+	$cb = $form->addCheckBox('saveandedit', $this->getLang('btn_saveandedit'), $pos++);
+	$cb->attrs = $attrs;
+        $form->addtagClose('div', $pos++);
     }
 }
 
