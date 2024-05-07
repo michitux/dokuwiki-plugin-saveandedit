@@ -1,9 +1,5 @@
 <?php
 
-use dokuwiki\Extension\ActionPlugin;
-use dokuwiki\Extension\EventHandler;
-use dokuwiki\Extension\Event;
-
 /**
  * DokuWiki Plugin saveandedit (Action Component)
  *
@@ -11,28 +7,34 @@ use dokuwiki\Extension\Event;
  * @author  Michael Hamann <michael@content-space.de>
  */
 
-// must be run within Dokuwiki
-if (!defined('DOKU_INC')) die();
-
-if (!defined('DOKU_LF')) define('DOKU_LF', "\n");
-if (!defined('DOKU_TAB')) define('DOKU_TAB', "\t");
+use dokuwiki\Extension\ActionPlugin;
+use dokuwiki\Extension\EventHandler;
+use dokuwiki\Extension\Event;
 
 class action_plugin_saveandedit extends ActionPlugin
 {
     /** The action that has been handled before the current action */
-    private $previous_act;
+    private $previousAct;
 
     public function register(EventHandler $controller)
     {
-       // try to register our handler at a late position so e.g. the edittable plugin has a possibility to process its data
-        $controller->register_hook('ACTION_ACT_PREPROCESS', 'BEFORE', $this, 'handle_action_act_preprocess', null, 1000);
-        $controller->register_hook('FORM_EDIT_OUTPUT', 'BEFORE', $this, 'handle_html_editform_output');
+       // try to register our handler at a late position so e.g. the edittable plugin has a possibility to process its
+        // data
+        $controller->register_hook(
+            'ACTION_ACT_PREPROCESS',
+            'BEFORE',
+            $this,
+            'handleActionActPreprocess',
+            null,
+            1000
+        );
+        $controller->register_hook('FORM_EDIT_OUTPUT', 'BEFORE', $this, 'handleHtmlEditFormOutput');
     }
 
     /**
      * Clean the environment after saving for the next edit.
      */
-    private function clean_after_save()
+    private function cleanAfterSave()
     {
         global $ID, $INFO, $REV, $RANGE, $TEXT, $PRE, $SUF;
         $REV = ''; // now we are working on the current revision
@@ -54,7 +56,7 @@ class action_plugin_saveandedit extends ActionPlugin
         $INFO = pageinfo(); // reset pageinfo to new data (e.g. if the page exists)
     }
 
-    public function handle_action_act_preprocess(Event $event, $param)
+    public function handleActionActPreprocess(Event $event, $param)
     {
         global $INPUT;
 
@@ -81,47 +83,47 @@ class action_plugin_saveandedit extends ActionPlugin
                late. To fix plugins that want to handle the 'edit'
                action, we trigger a new event for the 'edit' action.
             */
-            if ($this->previous_act === 'save' && $act === 'draftdel') {
-                $this->clean_after_save();
+            if ($this->previousAct === 'save' && $act === 'draftdel') {
+                $this->cleanAfterSave();
                 $event->data = 'edit';
 
-        /*
-           The edittable plugin would restore $TEXT from the
-           edittable_data post data on each
-           ACTION_ACT_PREPROCESS call. This breaks the
-           automatic restore of the prefix and suffix
-           data. Stop it from doing this by unsetting its
-           data.
-        */
+                /*
+                   The edittable plugin would restore $TEXT from the
+                   edittable_data post data on each
+                   ACTION_ACT_PREPROCESS call. This breaks the
+                   automatic restore of the prefix and suffix
+                   data. Stop it from doing this by unsetting its
+                   data.
+                */
                 $INPUT->post->remove('edittable_data');
 
-        /*
-           Stop propagation of the event. All subsequent event
-           handlers will be called anyway again by the event
-           triggered below.
-        */
+                /*
+                   Stop propagation of the event. All subsequent event
+                   handlers will be called anyway again by the event
+                   triggered below.
+                */
                 $event->stopPropagation();
 
-        /*
-           Trigger a new event for the edit action.
-           This ensures that all event handlers for the edit
-           action are called.  However, we only advise the
-           before handlers and re-use the default action and
-           the after handling of the original event.
-        */
+                /*
+                   Trigger a new event for the edit action.
+                   This ensures that all event handlers for the edit
+                   action are called.  However, we only advise the
+                   before handlers and re-use the default action and
+                   the after handling of the original event.
+                */
                 $new_evt = new Event('ACTION_ACT_PREPROCESS', $event->data);
-        // prevent the default action of the original event
+                // prevent the default action of the original event
                 if (!$new_evt->advise_before()) {
                     $event->preventDefault();
                 }
             }
-            $this->previous_act = $act;
+            $this->previousAct = $act;
             // pre-Greebo compatibility
         } elseif ($act === 'save' && actionOK($act) && act_permcheck($act) == 'save' && checkSecurityToken()) {
             $event->data = act_save($act);
             if ($event->data === 'show') {
                 $event->data = 'edit';
-                $this->clean_after_save();
+                $this->cleanAfterSave();
             } elseif ($event->data === 'conflict') {
                 // DokuWiki won't accept 'conflict' as action here.
                 // Just execute save again, the conflict will be detected again
@@ -130,14 +132,18 @@ class action_plugin_saveandedit extends ActionPlugin
         }
     }
 
-    public function handle_html_editform_output(Event $event, $param)
+    public function handleHtmlEditFormOutput(Event $event, $param)
     {
         global $INPUT;
 
         $form = $event->data;
         $pos = $form->findPositionByAttribute('type', 'submit');
 
-        if (!$pos) return; // no submit button found, source view
+        if (!$pos) {
+            // no submit button found, source view
+            return;
+        }
+
         --$pos;
 
         $form->addTagOpen('div', $pos++);
@@ -145,7 +151,7 @@ class action_plugin_saveandedit extends ActionPlugin
 
         $cb = $form->addCheckBox('saveandedit', $this->getLang('btn_saveandedit'), $pos++);
         $cb->attrs = $attrs;
-        $form->addtagClose('div', $pos++);
+        $form->addtagClose('div', $pos);
     }
 }
 
