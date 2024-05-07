@@ -1,7 +1,7 @@
 base   saveandedit
 author Michael Hamann
 email  michael@content-space.de
-date   2024-05-06
+date   2024-05-07
 name   saveandedit plugin
 desc   A plugin that adds a checkbox to the edit form that saves and then lets you continue editing.
 url    http://www.dokuwiki.org/plugin:saveandedit
